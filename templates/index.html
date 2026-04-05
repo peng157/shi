@@ -4,8 +4,9 @@
     <title>❤️</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css2?family=Love+Ya+Like+A+Sister&display=swap" rel="stylesheet">
-    <style>
-        body {
+
+<style>
+body {
     margin: 0;
     font-family: Arial;
     background: linear-gradient(to bottom, #ff758c,#ff758c);
@@ -13,7 +14,6 @@
     justify-content: center;
 }
 
-/* 模擬手機畫面 */
 .app-container {
     width: 100%;
     max-width: 420px;
@@ -24,9 +24,7 @@
     box-shadow: 0 0 30px rgba(0,0,0,0.2);
 }
 
-/* 上方標題列 */
 .header {
-    background: linear-gradient(45deg, #ff758c, #ff758c);
     padding: 20px;
     color: white;
     text-align: center;
@@ -34,22 +32,19 @@
     font-size: 32px;
 }
 
-/* 主內容 */
 .content {
     padding: 20px;
     text-align: center;
 }
 
-/* 天數 */
 .days {
     font-size: 40px;
     font-weight: bold;
     color:#fcf9f9;
 }
 
-/* 紀念日 */
 .anniversary {
-    color:#fcf9f9
+    color:#fcf9f9;
     margin-top: 10px;
 }
 
@@ -61,16 +56,28 @@
     margin-top: 20px;
 }
 
+.photo-item {
+    position: relative;
+}
+
 .photo-wall img {
     width: 100%;
     aspect-ratio: 1/1;
     object-fit: cover;
     border-radius: 10px;
-    transition: 0.3s;
 }
 
-.photo-wall img:hover {
-    transform: scale(1.05);
+/* 刪除按鈕 */
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border-radius: 50%;
+    padding: 4px 6px;
+    text-decoration: none;
+    font-size: 12px;
 }
 
 /* 上傳區 */
@@ -78,12 +85,10 @@
     margin-top: 20px;
 }
 
-/* 隱藏原 input */
 input[type="file"] {
     display: none;
 }
 
-/* 選擇按鈕 */
 .cute-file-btn {
     display: inline-block;
     padding: 10px 20px;
@@ -94,7 +99,6 @@ input[type="file"] {
     margin: 10px;
 }
 
-/* 上傳按鈕 */
 .cute-upload-btn {
     padding: 10px 25px;
     background: linear-gradient(45deg, #ff758c, #ff7eb3);
@@ -103,13 +107,38 @@ input[type="file"] {
     color: white;
     cursor: pointer;
 }
-    </style>
+
+/* 全螢幕圖片 */
+#viewer {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    justify-content: center;
+    align-items: center;
+}
+
+#viewer img {
+    max-width: 90%;
+    max-height: 90%;
+}
+#viewer img {
+    transition: transform 0.05s;
+    touch-action: none;
+}
+</style>
 </head>
+
 <body>
-   <div class="app-container">
+
+<div class="app-container">
 
     <div class="header">
-           MY LOVE WITH HER ❤️</div>
+        MY LOVE WITH HER ❤️
+    </div>
 
     <div class="content">
 
@@ -126,7 +155,12 @@ input[type="file"] {
         <!-- 照片牆 -->
         <div class="photo-wall">
             {% for photo in photos %}
-                <img src="{{ url_for('static', filename='photos/' + photo) }}">
+                <div class="photo-item">
+                    <img src="{{ url_for('static', filename='photos/' + photo) }}" 
+                         onclick="openViewer(this.src)">
+                    
+                    <a href="/delete/{{ photo }}" class="delete-btn">🗑️</a>
+                </div>
             {% endfor %}
         </div>
 
@@ -150,6 +184,81 @@ input[type="file"] {
 
     </div>
 </div>
+
+<!-- 全螢幕 viewer -->
+<div id="viewer" onclick="closeViewer()">
+    <img id="viewer-img">
+</div>
+
+<script>
+let scale = 1;
+let rotation = 0;
+
+let startDistance = 0;
+let startAngle = 0;
+
+function openViewer(src) {
+    const viewer = document.getElementById("viewer");
+    const img = document.getElementById("viewer-img");
+
+    img.src = src;
+    viewer.style.display = "flex";
+
+    scale = 1;
+    rotation = 0;
+    img.style.transform = "scale(1) rotate(0deg)";
+}
+
+function closeViewer() {
+    document.getElementById("viewer").style.display = "none";
+}
+
+// 計算兩指距離
+function getDistance(touches) {
+    let dx = touches[0].clientX - touches[1].clientX;
+    let dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+}
+
+// 計算角度
+function getAngle(touches) {
+    let dx = touches[0].clientX - touches[1].clientX;
+    let dy = touches[0].clientY - touches[1].clientY;
+    return Math.atan2(dy, dx) * 180 / Math.PI;
+}
+
+// 手指開始
+document.getElementById("viewer").addEventListener("touchstart", function(e) {
+    if (e.touches.length === 2) {
+        startDistance = getDistance(e.touches);
+        startAngle = getAngle(e.touches);
+    }
+});
+
+// 手指移動
+document.getElementById("viewer").addEventListener("touchmove", function(e) {
+    if (e.touches.length === 2) {
+        e.preventDefault();
+
+        let newDistance = getDistance(e.touches);
+        let newAngle = getAngle(e.touches);
+
+        // 縮放
+        scale = newDistance / startDistance;
+        scale = Math.min(Math.max(0.5, scale), 4);
+
+        // 旋轉
+        rotation = newAngle - startAngle;
+
+        updateTransform();
+    }
+});
+
+function updateTransform() {
+    const img = document.getElementById("viewer-img");
+    img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+}
+</script>
 
 </body>
 </html>
