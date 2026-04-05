@@ -65,6 +65,10 @@ body {
     aspect-ratio: 1/1;
     object-fit: cover;
     border-radius: 10px;
+    touch-action: none; /* 禁用手勢 */
+    position: relative;
+    transition: transform 0.05s;
+    z-index: 0;
 }
 
 /* 刪除按鈕 */
@@ -107,28 +111,6 @@ input[type="file"] {
     color: white;
     cursor: pointer;
 }
-
-/* 全螢幕圖片 */
-#viewer {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.9);
-    justify-content: center;
-    align-items: center;
-}
-
-#viewer img {
-    max-width: 90%;
-    max-height: 90%;
-}
-#viewer img {
-    transition: transform 0.05s;
-    touch-action: none;
-}
 </style>
 </head>
 
@@ -156,9 +138,7 @@ input[type="file"] {
         <div class="photo-wall">
             {% for photo in photos %}
                 <div class="photo-item">
-                    <img src="{{ url_for('static', filename='photos/' + photo) }}" 
-                         onclick="openViewer(this.src)">
-                    
+                    <img src="{{ url_for('static', filename='photos/' + photo) }}">
                     <a href="/delete/{{ photo }}" class="delete-btn">🗑️</a>
                 </div>
             {% endfor %}
@@ -185,78 +165,56 @@ input[type="file"] {
     </div>
 </div>
 
-<!-- 全螢幕 viewer -->
-<div id="viewer" onclick="closeViewer()">
-    <img id="viewer-img">
-</div>
-
 <script>
-let scale = 1;
-let rotation = 0;
+// 互動照片牆
+document.querySelectorAll('.photo-wall img').forEach(img => {
+    let posX = 0, posY = 0, scale = 1, rotation = 0;
+    let startX = 0, startY = 0;
+    let startDistance = 0;
+    let startAngle = 0;
+    let moving = false;
 
-let startDistance = 0;
-let startAngle = 0;
+    img.addEventListener('touchstart', e => {
+        e.stopPropagation();
+        if(e.touches.length === 1){
+            moving = true;
+            startX = e.touches[0].clientX - posX;
+            startY = e.touches[0].clientY - posY;
+        } else if(e.touches.length === 2){
+            moving = false;
+            startDistance = getDistance(e.touches) / scale;
+            startAngle = getAngle(e.touches) - rotation;
+        }
+    });
 
-function openViewer(src) {
-    const viewer = document.getElementById("viewer");
-    const img = document.getElementById("viewer-img");
+    img.addEventListener('touchmove', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if(e.touches.length === 1 && moving){
+            posX = e.touches[0].clientX - startX;
+            posY = e.touches[0].clientY - startY;
+        } else if(e.touches.length === 2){
+            scale = getDistance(e.touches) / startDistance;
+            rotation = getAngle(e.touches) - startAngle;
+        }
+        img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale}) rotate(${rotation}deg)`;
+    });
 
-    img.src = src;
-    viewer.style.display = "flex";
+    img.addEventListener('touchend', e => {
+        moving = false;
+    });
+});
 
-    scale = 1;
-    rotation = 0;
-    img.style.transform = "scale(1) rotate(0deg)";
-}
-
-function closeViewer() {
-    document.getElementById("viewer").style.display = "none";
-}
-
-// 計算兩指距離
-function getDistance(touches) {
+function getDistance(touches){
     let dx = touches[0].clientX - touches[1].clientX;
     let dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx*dx + dy*dy);
 }
 
-// 計算角度
-function getAngle(touches) {
+function getAngle(touches){
     let dx = touches[0].clientX - touches[1].clientX;
     let dy = touches[0].clientY - touches[1].clientY;
     return Math.atan2(dy, dx) * 180 / Math.PI;
-}
-
-// 手指開始
-document.getElementById("viewer").addEventListener("touchstart", function(e) {
-    if (e.touches.length === 2) {
-        startDistance = getDistance(e.touches);
-        startAngle = getAngle(e.touches);
-    }
-});
-
-// 手指移動
-document.getElementById("viewer").addEventListener("touchmove", function(e) {
-    if (e.touches.length === 2) {
-        e.preventDefault();
-
-        let newDistance = getDistance(e.touches);
-        let newAngle = getAngle(e.touches);
-
-        // 縮放
-        scale = newDistance / startDistance;
-        scale = Math.min(Math.max(0.5, scale), 4);
-
-        // 旋轉
-        rotation = newAngle - startAngle;
-
-        updateTransform();
-    }
-});
-
-function updateTransform() {
-    const img = document.getElementById("viewer-img");
-    img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
 }
 </script>
 
