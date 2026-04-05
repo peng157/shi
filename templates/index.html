@@ -6,76 +6,151 @@
     <link href="https://fonts.googleapis.com/css2?family=Love+Ya+Like+A+Sister&display=swap" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(to right, #ff758c, #ff7eb3);
-            font-family: Arial;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        h1 {
-            font-family: 'Love Ya Like A Sister', cursive;
-            font-size: 80px;
-            color: #fff;
-            text-shadow: 2px 2px 4px #ff7eb3;
-        }
-        h2 { font-size: 48px; margin-top: 10px; }
-        p { font-size: 22px; margin-top: 20px; }
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(to bottom, #ff758c, #ff7eb3);
+    display: flex;
+    justify-content: center;
+}
 
-        /* 照片牆 */
-        .photo-wall {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .photo-wall img {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            margin: 5px;
-            border-radius: 10px;
-            border: 2px solid white;
-        }
+/* 模擬手機畫面 */
+.app-container {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    background: white;
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0,0,0,0.2);
+}
 
-        /* 上傳按鈕 */
-        .upload-btn input[type="file"] {
-            padding: 10px;
-            border-radius: 10px;
-            border: none;
-        }
-        .upload-btn button {
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: none;
-            background-color: #fff;
-            color: #ff7eb3;
-            font-weight: bold;
-            cursor: pointer;
-            margin-left: 10px;
-        }
+/* 上方標題列 */
+.header {
+    background: linear-gradient(45deg, #ff758c, #ff7eb3);
+    padding: 20px;
+    color: white;
+    text-align: center;
+    font-family: 'Love Ya Like A Sister', cursive;
+    font-size: 32px;
+}
+
+/* 主內容 */
+.content {
+    padding: 20px;
+    text-align: center;
+}
+
+/* 天數 */
+.days {
+    font-size: 40px;
+    font-weight: bold;
+    color: #ff4d6d;
+}
+
+/* 紀念日 */
+.anniversary {
+    color: #ff758c;
+    margin-top: 10px;
+}
+
+/* 照片牆 */
+.photo-wall {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.photo-wall img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.photo-wall img:hover {
+    transform: scale(1.05);
+}
+
+/* 上傳區 */
+.upload-box {
+    margin-top: 20px;
+}
+
+/* 隱藏原 input */
+input[type="file"] {
+    display: none;
+}
+
+/* 選擇按鈕 */
+.cute-file-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #ffd1dc;
+    color: #ff4d6d;
+    border-radius: 20px;
+    cursor: pointer;
+    margin: 10px;
+}
+
+/* 上傳按鈕 */
+.cute-upload-btn {
+    padding: 10px 25px;
+    background: linear-gradient(45deg, #ff758c, #ff7eb3);
+    border: none;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
-    <h1>MY LOVE</h1>
-    <h2>{{ days }} 天 ❤️</h2>
+   <div class="app-container">
 
-    {% if is_anniversary %}
-        <p>今天是 {{ anniversary_day }} 天紀念日 🎉💖</p>
-    {% endif %}
-
-    <!-- 照片牆 -->
-    <div class="photo-wall">
-        {% for photo in photos %}
-            <img src="{{ url_for('static', filename='photos/' + photo) }}">
-        {% endfor %}
+    <div class="header">
+        MY LOVE ❤️
     </div>
 
-    <!-- 上傳照片 -->
-    <div class="upload-btn">
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="photo" accept="image/*" required>
-            <button type="submit">新增照片 ❤️</button>
-        </form>
+    <div class="content">
+
+        <div class="days">
+            {{ days }} 天
+        </div>
+
+        {% if is_anniversary %}
+            <div class="anniversary">
+                🎉 {{ anniversary_day }} 天紀念日
+            </div>
+        {% endif %}
+
+        <!-- 照片牆 -->
+        <div class="photo-wall">
+            {% for photo in photos %}
+                <img src="{{ url_for('static', filename='photos/' + photo) }}">
+            {% endfor %}
+        </div>
+
+        <!-- 上傳 -->
+        <div class="upload-box">
+            <form method="POST" enctype="multipart/form-data">
+                
+                <label for="file" class="cute-file-btn">
+                    📸 選擇照片
+                </label>
+                <input type="file" id="file" name="photo" accept="image/*" required>
+
+                <br>
+
+                <button class="cute-upload-btn">
+                    💕 新增照片
+                </button>
+
+            </form>
+        </div>
+
     </div>
+</div>
+
 </body>
 </html>
