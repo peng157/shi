@@ -173,9 +173,21 @@ document.querySelectorAll('.photo-wall img').forEach(img => {
     let startAngle = 0;
     let moving = false;
 
+    // 長按刪除計時器
+    let longPressTimer;
+
     // 拖移與手勢
     img.addEventListener('touchstart', e => {
         e.stopPropagation();
+
+        // 長按刪除
+        longPressTimer = setTimeout(() => {
+            const filename = img.getAttribute('src').split('/').pop();
+            if(confirm("確定要刪除這張照片嗎？")) {
+                window.location.href = `/delete/${filename}`;
+            }
+        }, 1000); // 1秒長按
+
         if(e.touches.length === 1){
             moving = true;
             startX = e.touches[0].clientX - posX;
@@ -190,6 +202,10 @@ document.querySelectorAll('.photo-wall img').forEach(img => {
     img.addEventListener('touchmove', e => {
         e.preventDefault();
         e.stopPropagation();
+
+        // 移動手勢 → 取消長按
+        clearTimeout(longPressTimer);
+
         if(e.touches.length === 1 && moving){
             posX = e.touches[0].clientX - startX;
             posY = e.touches[0].clientY - startY;
@@ -202,14 +218,7 @@ document.querySelectorAll('.photo-wall img').forEach(img => {
 
     img.addEventListener('touchend', e => {
         moving = false;
-    });
-
-    // 雙擊刪除
-    img.addEventListener('dblclick', () => {
-        const filename = img.getAttribute('src').split('/').pop();
-        if(confirm("確定要刪除這張照片嗎？")) {
-            window.location.href = `/delete/${filename}`;
-        }
+        clearTimeout(longPressTimer); // 手指放開取消長按
     });
 });
 
